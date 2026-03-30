@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Appliance Fault Finder</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#1e40af">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        body { font-family: 'Inter', system-ui, sans-serif; }
+        .led {
+            width: 46px;
+            height: 46px;
+            border-radius: 9999px;
+            box-shadow: 0 6px 10px -3px rgb(0 0 0 / 0.4),
+                        inset 0 3px 5px -1px rgb(255 255 255 / 0.3),
+                        0 0 0 3px rgb(0 0 0 / 0.6);
+            transition: all 0.2s ease;
+            cursor: pointer;
+            user-select: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 18px;
+        }
+        .led-on {
+            background: linear-gradient(145deg, #4ade80, #22c55e);
+            box-shadow: 0 0 18px #4ade80,
+                        0 6px 10px -3px rgb(74 222 128 / 0.5);
+        }
+        .led-label {
+            font-size: 12px;
+            font-weight: 500;
+            color: #9ca3af;
+            margin-top: 5px;
+            text-align: center;
+            line-height: 1.1;
+        }
+    </style>
+</head>
+<body class="bg-zinc-950 text-white min-h-screen">
+    <div class="max-w-md mx-auto p-5">
+
+        <!-- MENU -->
+        <div id="menu-screen" class="flex flex-col items-center justify-center min-h-screen text-center">
+            <div class="mb-20">
+                <h1 class="text-5xl font-bold tracking-tighter text-blue-400">Appliance</h1>
+                <h1 class="text-5xl font-bold tracking-tighter text-blue-400 -mt-2">Fault Finder</h1>
+                <p class="text-gray-400 mt-6 text-lg">Diagnose washer error codes<br>from LED patterns</p>
+            </div>
+
+            <div onclick="showGE()" class="w-full bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 rounded-3xl p-8 mb-6 active:scale-95 transition-all cursor-pointer">
+                <div class="text-3xl font-semibold">GE Washer</div>
+                <div class="text-blue-300 mt-1">Binary LED Calculator</div>
+            </div>
+
+            <div onclick="showWhirlpool()" class="w-full bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 rounded-3xl p-8 active:scale-95 transition-all cursor-pointer">
+                <div class="text-3xl font-semibold">Whirlpool Washer</div>
+                <div class="text-blue-300 mt-1">F/E LED Calculator</div>
+            </div>
+        </div>
+
+        <!-- GE SCREEN -->
+        <div id="ge-screen" class="hidden">
+            <button onclick="showMenu()" class="text-blue-400 mb-6 flex items-center gap-2 text-sm">
+                ← Back to Menu
+            </button>
+            
+            <h2 class="text-2xl font-bold text-blue-400 mb-6 text-center">GE Washer Fault Finder</h2>
+
+            <div class="text-center mb-6 text-sm text-gray-400">Tap the LEDs that are lit on your washer</div>
+
+            <!-- GE LEDs - smaller and tighter -->
+            <div class="flex justify-center gap-3 mb-10 overflow-x-auto pb-2">
+                <div class="flex flex-col items-center">
+                    <div onclick="toggleGE(5)" id="ge5" class="led bg-zinc-800"></div>
+                    <div class="led-label">Sensing</div>
+                </div>
+                <div class="flex flex-col items-center">
+                    <div onclick="toggleGE(4)" id="ge4" class="led bg-zinc-800"></div>
+                    <div class="led-label">Fill</div>
+                </div>
+                <div class="flex flex-col items-center">
+                    <div onclick="toggleGE(3)" id="ge3" class="led bg-zinc-800"></div>
+                    <div class="led-label">Soak</div>
+                </div>
+                <div class="flex flex-col items-center">
+                    <div onclick="toggleGE(2)" id="ge2" class="led bg-zinc-800"></div>
+                    <div class="led-label">Wash</div>
+                </div>
+                <div class="flex flex-col items-center">
+                    <div onclick="toggleGE(1)" id="ge1" class="led bg-zinc-800"></div>
+                    <div class="led-label">Rinse</div>
+                </div>
+                <div class="flex flex-col items-center">
+                    <div onclick="toggleGE(0)" id="ge0" class="led bg-zinc-800"></div>
+                    <div class="led-label">Spin</div>
+                </div>
+            </div>
+
+            <div class="bg-zinc-900 rounded-3xl p-8 mb-8">
+                <div class="text-center">
+                    <div class="text-4xl font-mono font-bold text-yellow-400 mb-2" id="ge-code">Error: 00</div>
+                    <div id="ge-description" class="text-gray-300 text-sm leading-relaxed min-h-[140px]"></div>
+                </div>
+            </div>
+
+            <!-- Compact RESET button -->
+            <div class="flex justify-center">
+                <button onclick="resetGE()" 
+                        class="bg-red-600 hover:bg-red-700 px-10 py-3.5 rounded-2xl font-semibold text-base">
+                    RESET
+                </button>
+            </div>
+
+            <div class="mt-10 text-[10px] text-gray-500 leading-tight px-2">
+                Diagnostics entry: Hold Start button while rotating knob 180° or 7 turns, then release. Wait until lights flash, rotate knob one turn clockwise, press Start. Press Start to advance codes.
+            </div>
+        </div>
+
+        <!-- WHIRLPOOL SCREEN -->
+        <div id="whirlpool-screen" class="hidden p-6">
+            <button onclick="showMenu()" class="text-blue-400 mb-6 flex items-center gap-2 text-sm">
+                ← Back to Menu
+            </button>
+            <h2 class="text-2xl font-bold text-blue-400 mb-6 text-center">Whirlpool Washer Fault Finder</h2>
+
+            <div class="mb-8">
+                <div class="text-yellow-400 text-sm font-medium mb-3">F Code (Sensing LED usually ON)</div>
+                <div class="flex justify-between gap-4">
+                    <div class="flex flex-col items-center">
+                        <div onclick="toggleF('sensing')" id="f-sensing" class="led led-on text-black">F</div>
+                        <div class="led-label"></div>
+                    </div>
+                    <div class="flex flex-col items-center">
+                        <div onclick="toggleF('wash')" id="f-wash" class="led bg-zinc-800"></div>
+                        <div class="led-label">Wash</div>
+                    </div>
+                    <div class="flex flex-col items-center">
+                        <div onclick="toggleF('rinse')" id="f-rinse" class="led bg-zinc-800"></div>
+                        <div class="led-label">Rinse</div>
+                    </div>
+                    <div class="flex flex-col items-center">
+                        <div onclick="toggleF('spin')" id="f-spin" class="led bg-zinc-800"></div>
+                        <div class="led-label">Spin</div>
+                    </div>
+                    <div class="flex flex-col items-center">
+                        <div onclick="toggleF('done')" id="f-done" class="led bg-zinc-800"></div>
+                        <div class="led-label">Done</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mb-10">
+                <div class="text-yellow-400 text-sm font-medium mb-3">E Code (Sensing LED usually OFF)</div>
+                <div class="flex justify-between gap-4">
+                    <div class="flex flex-col items-center">
+                        <div class="led bg-zinc-800 text-black">E</div>
+                        <div class="led-label"></div>
+                    </div>
+                    <div class="flex flex-col items-center">
+                        <div onclick="toggleE('wash')" id="e-wash" class="led bg-zinc-800"></div>
+                        <div class="led-label">Wash</div>
+                    </div>
+                    <div class="flex flex-col items-center">
+                        <div onclick="toggleE('rinse')" id="e-rinse" class="led bg-zinc-800"></div>
+                        <div class="led-label">Rinse</div>
+                    </div>
+                    <div class="flex flex-col items-center">
+                        <div onclick="toggleE('spin')" id="e-spin" class="led bg-zinc-800"></div>
+                        <div class="led-label">Spin</div>
+                    </div>
+                    <div class="flex flex-col items-center">
+                        <div onclick="toggleE('done')" id="e-done" class="led bg-zinc-800"></div>
+                        <div class="led-label">Done</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex gap-4">
+                <button onclick="resetWhirlpool()" class="flex-1 bg-red-600 hover:bg-red-700 py-4 rounded-2xl font-semibold">
+                    Reset
+                </button>
+                <button onclick="calculateWhirlpool()" class="flex-1 bg-blue-600 hover:bg-blue-700 py-4 rounded-2xl font-semibold">
+                    Calculate
+                </button>
+            </div>
+
+            <div class="mt-8 bg-zinc-900 rounded-3xl p-8">
+                <div id="wp-code" class="text-4xl font-mono font-bold text-yellow-400 text-center mb-4"></div>
+                <div id="wp-result" class="text-sm text-gray-300 whitespace-pre-line leading-relaxed"></div>
+            </div>
+
+            <div class="mt-12 text-[10px] text-gray-500 leading-tight px-2">
+                * To enter diagnostics: Rotate the knob three turns clockwise, then one turn counterclockwise, then one more turn clockwise. Then turn the knob clockwise once and press start.
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // GE Logic
+        let geState = {5: false, 4: false, 3: false, 2: false, 1: false, 0: false};
+
+        const geDescriptions = {
+            0: "Tap the LEDs to match the lit ones on your washer.",
+            1: "Basket spins with the lid unlocked. Check lid lock/switch assembly and wire harness.",
+            2: "Lid lock/switch failure. Unplug and check wire harness connections. Replace lid lock/switch if needed.",
+            3: "Locked motor. Overloaded washer or drive motor issue. Check for overload, binding, or motor/capacitor problems.",
+            4: "Electronic control board reset its software. No problem detected; code indicates software reset.",
+            5: "Mode shifter failure. Check wire harness and resistance (about 5,700 ohms). Replace mode shifter if faulty.",
+            6: "Water overflow error. Check inlet valves for leaks or pressure sensor. Replace valves or control board as needed.",
+            8: "Water level pressure sensor failure. Check water supply, inlet valves, and pressure hose. Replace faulty parts.",
+            9: "Lid switch error. Lid not opened for 3 cycles. Check lid lock/switch; replace if not detecting opens.",
+            10: "Mode shifter failure. Same as code 5: Check wire harness and resistance.",
+            11: "AC power is not 60 Hz. Check power supply frequency with utility company.",
+            12: "Water overflow error. Same as code 6: Check pressure hose and inlet valves.",
+            13: "Lid lock/switch failure. Unplug and check wiring; replace lid lock/switch.",
+            14: "Lid lock/switch failure. Same as code 13.",
+            15: "Thermistor (temperature sensor) failure. Check wiring; replace thermistor.",
+            16: "Not draining. Check drain hose, pump wiring; replace drain pump if needed.",
+            17: "Basket won't spin at start of wash cycle. Don't load wet garments; check for binding or motor issues.",
+            18: "Not draining. Same as code 16: Check drain system and pump.",
+            19: "Washer paused >24 hours or water in tub while off. Restart cycles promptly; check for leaking valves.",
+            20: "Water overflow error. Same as code 6.",
+            21: "Water overflow error. Same as code 6.",
+            22: "Can't balance dry load to start cycle. Redistribute load; check for binding or wiring issues.",
+            23: "Lid lock/switch failure. Same as code 13.",
+            24: "Lid lock/switch failure. Same as code 13.",
+            25: "Control detects water level drop when not draining. Check drain hose installation, pressure hose, or tub leaks.",
+            26: "Out of balance during final spin. Redistribute load; check leveling, binding, or wiring.",
+            27: "Lid open >15 minutes with water in tub. Restart cycles quickly; check pressure sensor if no water.",
+            29: "Excessive suds caused cycle to stop. Use proper HE detergent amount; Possible low quality detergent.",
+            30: "Stuck key on control panel. Check wiring; replace user interface or control board.",
+            31: "Out of balance during final spin. Same as code 26.",
+            32: "Can't unlock the lid. Check lid lock/switch wiring; replace assembly.",
+            33: "Inverter Fault",
+            34: "Inverter Fault",
+            35: "Low Power Supply Voltage",
+            36: "High Power Supply Voltage",
+            41: "Inverter Fault",
+            42: "Inverter Fault",
+            43: "Inverter Fault",
+            44: "Inverter Fault",
+            45: "Inverter Fault",
+            46: "Inverter Fault",
+            47: "Inverter Fault",
+            48: "Inverter Fault",
+            49: "Inverter Fault",
+            50: "Inverter Fault",
+            51: "Inverter Fault",
+            52: "Stuck Water Valve, Critical Flood level while machine not running",
+            53: "Check for Broken or Loose Belt",
+            58: "Main Board Failure",
+            59: "Accelerometer Fault. Check RPS Sensor or Motor",
+            60: "Accelerometer Fault. Check RPS Sensor or Motor",
+            61: "Accelerometer Fault. Check RPS Sensor or Motor",
+            63: "Accelerometer Fault. Check RPS Sensor or Motor",
+            93: "Main Board Failure"
+        };
+
+        function toggleGE(bit) {
+            geState[bit] = !geState[bit];
+            const el = document.getElementById(`ge${bit}`);
+            if (geState[bit]) el.classList.add('led-on'); else el.classList.remove('led-on');
+            updateGE();
+        }
+
+        function updateGE() {
+            let total = 0;
+            if (geState[5]) total += 32;
+            if (geState[4]) total += 16;
+            if (geState[3]) total += 8;
+            if (geState[2]) total += 4;
+            if (geState[1]) total += 2;
+            if (geState[0]) total += 1;
+
+            document.getElementById('ge-code').textContent = `Error: ${total.toString().padStart(2, '0')}`;
+
+            const desc = document.getElementById('ge-description');
+            desc.textContent = (total === 0) ? geDescriptions[0] : (geDescriptions[total] || `Unknown code ${total} – Double-check the lit LEDs and refer to your owner’s manual.`);
+        }
+
+        function resetGE() {
+            geState = {5: false, 4: false, 3: false, 2: false, 1: false, 0: false};
+            document.querySelectorAll('#ge-screen .led').forEach(el => el.classList.remove('led-on'));
+            updateGE();
+        }
+
+        // Whirlpool Logic
+        let fState = {wash: false, rinse: false, spin: false, done: false};
+        let eState = {wash: false, rinse: false, spin: false, done: false};
+
+        const whirlpoolCodes = {
+            "F0E2": {desc: "Excessive suds", res: "Use only HE detergent and reduce amount. Run rinse/spin."},
+            "F0E3": {desc: "Overload", res: "Load too large/unbalanced. Remove items & redistribute."},
+            "F0E4": {desc: "Spin limited by temp", res: "Water too hot for cycle. Cool or change cycle."},
+            "F0E5": {desc: "Unbalanced load", res: "Redistribute evenly. Avoid single large items."},
+            "F0E7": {desc: "Load in clean cycle", res: "Remove load before clean washer cycle."},
+            "F1E1": {desc: "Main control failure", res: "Unplug 5 min. Replace control if persists."},
+            "F1E2": {desc: "Motor control failure", res: "Check wiring. Replace motor control."},
+            "F2E1": {desc: "Stuck key", res: "Clean panel. Replace UI if stuck."},
+            "F2E3": {desc: "Main/UI mismatch", res: "Verify compatibility. Replace parts."},
+            "F2E5": {desc: "UI software error", res: "Unplug to reset. Replace UI if continues."},
+            "F3E1": {desc: "Pressure sensor fault", res: "Check hose for clogs. Replace switch."},
+            "F3E2": {desc: "Inlet thermistor fault", res: "Check wiring. Replace sensor."},
+            "F5E1": {desc: "Lid switch fault", res: "Check alignment. Replace switch."},
+            "F5E2": {desc: "Lid lock fault", res: "Check for obstructions. Replace lock."},
+            "F5E3": {desc: "Lid unlock fault", res: "Check wiring. Replace lock."},
+            "F5E4": {desc: "Lid not opened", res: "Open lid between cycles to reset."},
+            "F6E1": {desc: "Main/UI comm error", res: "Check harness. Replace boards."},
+            "F6E2": {desc: "Main/motor comm error", res: "Check wiring. Replace controls."},
+            "F7E1": {desc: "Speed sensor fault", res: "Check tach wiring. Replace sensor/motor."},
+            "F7E5": {desc: "Shifter fault", res: "Replace shifter assembly."},
+            "F7E6": {desc: "Motor circuit fault", res: "Check windings/connections. Replace motor."},
+            "F7E7": {desc: "Motor RPM target fail", res: "Reduce load. Check belt/drive."},
+            "F7E9": {desc: "Locked rotor", res: "Remove jam. Check bearings."},
+            "F8E1": {desc: "Long fill", res: "Check supply/hoses/screens. Open faucets."},
+            "F8E3": {desc: "Overflow", res: "Check pressure switch. Replace if needed."},
+            "F8E5": {desc: "Hoses reversed", res: "Swap hot/cold hoses."},
+            "F9E1": {desc: "Long drain", res: "Clean hose/filter. Check for clogs."}
+        };
+
+        function toggleF(key) {
+            if (key === 'sensing') return;
+            fState[key] = !fState[key];
+            const el = document.getElementById(`f-${key}`);
+            if (fState[key]) el.classList.add('led-on'); else el.classList.remove('led-on');
+        }
+
+        function toggleE(key) {
+            eState[key] = !eState[key];
+            const el = document.getElementById(`e-${key}`);
+            if (eState[key]) el.classList.add('led-on'); else el.classList.remove('led-on');
+        }
+
+        function calculateWhirlpool() {
+            const fNum = (fState.wash ? 8 : 0) + (fState.rinse ? 4 : 0) + (fState.spin ? 2 : 0) + (fState.done ? 1 : 0);
+            const eNum = (eState.wash ? 8 : 0) + (eState.rinse ? 4 : 0) + (eState.spin ? 2 : 0) + (eState.done ? 1 : 0);
+            const code = `F${fNum}E${eNum}`;
+
+            document.getElementById('wp-code').textContent = code;
+
+            const resultEl = document.getElementById('wp-result');
+            if (whirlpoolCodes[code]) {
+                const info = whirlpoolCodes[code];
+                resultEl.innerHTML = `<strong>${info.desc}</strong><br><span class="text-gray-400">${info.res}</span>`;
+            } else {
+                resultEl.textContent = "No matching code found. Double-check the LEDs or try resetting the washer.";
+            }
+        }
+
+        function resetWhirlpool() {
+            fState = {wash: false, rinse: false, spin: false, done: false};
+            eState = {wash: false, rinse: false, spin: false, done: false};
+            document.querySelectorAll('#whirlpool-screen .led').forEach(el => {
+                if (!el.textContent.includes('F') && !el.textContent.includes('E')) el.classList.remove('led-on');
+            });
+            document.getElementById('wp-code').textContent = '';
+            document.getElementById('wp-result').textContent = '';
+        }
+
+        function showMenu() {
+            document.getElementById('menu-screen').classList.remove('hidden');
+            document.getElementById('ge-screen').classList.add('hidden');
+            document.getElementById('whirlpool-screen').classList.add('hidden');
+        }
+
+        function showGE() {
+            document.getElementById('menu-screen').classList.add('hidden');
+            document.getElementById('ge-screen').classList.remove('hidden');
+            document.getElementById('whirlpool-screen').classList.add('hidden');
+            resetGE();
+        }
+
+        function showWhirlpool() {
+            document.getElementById('menu-screen').classList.add('hidden');
+            document.getElementById('ge-screen').classList.add('hidden');
+            document.getElementById('whirlpool-screen').classList.remove('hidden');
+            resetWhirlpool();
+        }
+
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js');
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            showMenu();
+        });
+    </script>
+</body>
+</html>
